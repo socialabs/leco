@@ -1,14 +1,18 @@
 {tokenize} = require './tokenizer'
-{transform} = require './transformer'
+{transform, dumpHelpers} = require './transformer'
 CoffeeScript = require "coffee-script"
 
 
-compile = (source) ->
+compile = (source, helpers) ->
     tokens = tokenize(source)
-    coffee = transform(tokens)
+    coffee = transform(tokens, helpers)
     CoffeeScript.compile(coffee, bare: true)
 
 
-if process.argv[2]
-    f = require('fs').readFileSync(process.argv[2]).toString()
-    console.log(compile(f))
+printHelpers = (helpers, helpersName) ->
+    value = dumpHelpers(helpers, helpersName).join('\n')
+    CoffeeScript.compile(value, bare: true)
+
+
+exports.compile = compile
+exports.printHelpers = printHelpers

@@ -1,4 +1,4 @@
-transform = (tokens, helpersName='helpers') ->
+transform = (tokens, helpers={}, helpersName='helpers') ->
     coffee = []
     indent = 0
 
@@ -12,18 +12,30 @@ transform = (tokens, helpersName='helpers') ->
 
     write '(ctx) ->'
     indent += 1
+
+    if Object.keys(helpers).length
+        for line in dumpHelpers(helpers, helpersName)
+            write line
+
     write '(->'
     indent += 1
     write 'out = []'
 
     for [type, value] in tokens
+        if not value.length
+            continue
         switch type
             when 'literal'
                 push JSON.stringify(value)
             when 'code'
                 value = value.trim()
-                if value == 'end'
+                if value.match /^(end|else|when|catch|finally)/
                     indent -= 1
+                if value == 'end'
+                    continue
+                if value.match(/(-|=)>/)
+                    write value
+                    indent += 1
                 else if value[value.length - 1] == ':'
                     value = value.slice(0, value.length - 1)
                     write value
@@ -31,7 +43,7 @@ transform = (tokens, helpersName='helpers') ->
                 else
                     write value
             when 'out'
-                push value
+                push "#{helpersName}.safe " + value
             when 'escape'
                 push "#{helpersName}.escape " + value
             else
@@ -46,4 +58,17 @@ transform = (tokens, helpersName='helpers') ->
     return coffee.join('')
 
 
+dumpHelpers = (helpers, helpersName) ->
+    result = ["#{helpersName} = {"]
+    for name, value of helpers
+        if typeof value == 'string'
+            value = JSON.stringify(value)
+        else
+            value = value.toString()
+        result.push "#{name}: `#{value}`"
+    result.push '}'
+    return result
+
+
 exports.transform = transform
+exports.dumpHelpers = dumpHelpers
