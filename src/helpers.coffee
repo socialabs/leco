@@ -1,8 +1,8 @@
 exports.escape = (value) ->
-    if value.templateSafe
-        return value
     if not value?
         return ''
+    if value.templateSafe
+        return value
     return value.toString()
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -11,10 +11,10 @@ exports.escape = (value) ->
 
 
 exports.safe = (value) ->
-    if value.templateSafe
-        return value
     if not value?
         return ''
+    if value.templateSafe
+        return value
     value = value.toString()
     value.templateSafe = true
     return value

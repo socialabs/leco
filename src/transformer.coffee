@@ -1,61 +1,86 @@
+getWriter = (prefixes) ->
+    text: []
+    level: 0
+    endings: {}
+
+    push: (value) ->
+        @text.push value
+
+    result: ->
+        @text.join('')
+
+    write: (line, opts={}) ->
+        if not line.length
+            return
+        if not opts.type
+            opts.type = 'code'
+        prefix = prefixes[opts.type]
+        @push Array(@level + 1).join('  ')
+        @push prefix + line
+        @push '\n'
+        if opts.indent
+            if typeof opts.indent == 'string'
+                @indent(opts.indent)
+            else
+                @indent()
+
+    indent: (ending) ->
+        @endings[@level] = ending
+        @level++
+
+    dedent: ->
+        if @endings[@level - 1]
+            @write(@endings[@level - 1])
+            @endings[@level - 1] = null
+        @level--
+
 transform = (tokens, helpers={}, helpersName='helpers') ->
-    coffee = []
-    indent = 0
+    writer = getWriter
+        code: ''
+        literal: 'out.push '
+        out: "out.push #{helpersName}.safe "
+        escape: "out.push #{helpersName}.escape "
 
-    write = (line) ->
-        coffee.push Array(indent + 1).join('  ')
-        coffee.push line
-        coffee.push '\n'
 
-    push = (line) ->
-        write "out.push " + line
+    processCode = (value) ->
+        value = value.trim()
+        if value.match /^(end|else|when|catch|finally)/
+            writer.dedent()
+        if value == 'end'
+            return ['', false]
+        if value.match /(-|=)>/
+            value = value.replace(/(->|=>)$/, '((out) $1')
+            return [value, 'out)([]).join("")']
+        else if value[value.length - 1] == ':'
+            return [value.slice(0, value.length - 1), true]
+        return [value, false]
 
-    write '(ctx) ->'
-    indent += 1
+    writer.write '(ctx) ->', indent: true
 
     if Object.keys(helpers).length
         for line in dumpHelpers(helpers, helpersName)
-            write line
+            writer.write line
 
-    write '(->'
-    indent += 1
-    write 'out = []'
+    writer.write '((out) ->', indent: 'out).call(ctx, []).join("")'
 
     for [type, value] in tokens
         if not value.length
             continue
         switch type
             when 'literal'
-                push JSON.stringify(value)
-            when 'code'
-                value = value.trim()
-                if value.match /^(end|else|when|catch|finally)/
-                    indent -= 1
-                if value == 'end'
-                    continue
-                if value.match(/(-|=)>/)
-                    write value
-                    indent += 1
-                else if value[value.length - 1] == ':'
-                    value = value.slice(0, value.length - 1)
-                    write value
-                    indent += 1
-                else
-                    write value
-            when 'out'
-                push "#{helpersName}.safe " + value
-            when 'escape'
-                push "#{helpersName}.escape " + value
+                writer.write JSON.stringify(value), type: type
+            when 'code', 'out', 'escape'
+                [value, indent] = processCode(value)
+                writer.write value, type: type, indent: indent
             else
                 throw "Fail: unknown type #{type}"
 
-    if indent != 2
-        throw "Fail: end indent is not neutral: #{indent - 2}"
+    if writer.level != 2
+        throw "Fail: end indent is not neutral: #{writer.level - 2}"
 
-    write 'out.join("")'
-    write ').call(ctx)'
-    indent -= 1
-    return coffee.join('')
+    writer.dedent()
+    writer.dedent()
+    return writer.result()
 
 
 dumpHelpers = (helpers, helpersName) ->

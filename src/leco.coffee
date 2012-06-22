@@ -11,9 +11,10 @@ optConfig =
             abbr: 'n'
             flag: true
             help: 'do not include helpers in template'
-        'amd':
-            flag: true
-            help: 'wrap in AMD'
+        'wrap':
+            abbr: 'w'
+            default: 'amd'
+            help: 'wrapper type (AMD or CommonJS)'
         'helpers-name':
             help: 'helpers name for template'
             default: 'helpers'
@@ -21,9 +22,17 @@ optConfig =
             flag: true
             help: 'only output helpers'
 
-amdWrap = (template) ->
+wrappers =
+    amd:
+        begin: 'define(function() { return '
+        end: '});'
+    commonjs:
+        begin: 'module.exports = '
+        end: ';'
+
+wrap = (wrapper, template) ->
     stripped = template.trim().replace(/;$/, '')
-    return 'define(function() { return ' + stripped + '});';
+    return wrapper.begin + stripped + wrapper.end;
 
 run = ->
     parser = argumentum.load(optConfig)
@@ -38,8 +47,11 @@ run = ->
             output = compiler.compile(source)
         else
             output = compiler.compile(source, helpers)
-        if options.amd
-            output = amdWrap(output)
+        wrapper = wrappers[options.wrap.toLowerCase()]
+        if not wrapper
+            output = "Unknown wrapper: #{wrapper}"
+        else
+            output = wrap(wrapper, output)
 
     console.log(output)
 
