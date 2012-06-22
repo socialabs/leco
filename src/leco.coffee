@@ -14,7 +14,7 @@ optConfig =
         'wrap':
             abbr: 'w'
             default: 'amd'
-            help: 'wrapper type (AMD or CommonJS)'
+            help: 'wrapper type (AMD, CommonJS, global)'
         'helpers-name':
             help: 'helpers name for template'
             default: 'helpers'
@@ -28,11 +28,11 @@ wrappers =
         end: '});'
     commonjs:
         begin: 'module.exports = '
-        end: ';'
-
-wrap = (wrapper, template) ->
-    stripped = template.trim().replace(/;$/, '')
-    return wrapper.begin + stripped + wrapper.end;
+        end: ''
+    global:
+        begin: '''(function() {
+            (this.templates || (this.templates = {}))["%name%"] = '''
+        end: '}).call(this);'
 
 run = ->
     parser = argumentum.load(optConfig)
@@ -51,7 +51,13 @@ run = ->
         if not wrapper
             output = "Unknown wrapper: #{wrapper}"
         else
-            output = wrap(wrapper, output)
+            output = wrapper.begin + output.trim() + wrapper.end;
+
+    if output.indexOf('%name%') != -1
+        name = options[0].slice(
+            options[0].lastIndexOf('/') + 1,
+            options[0].lastIndexOf('.'))
+        output = output.replace('%name%', name)
 
     console.log(output)
 
