@@ -22,7 +22,7 @@ tokenize = (source) ->
                 continue
             break
         tokens.push(identify(source.slice(next + BEGIN.length, end)))
-        start = end + END.length + 1
+        start = end + END.length
         if start >= source.length
             break
     return tokens
