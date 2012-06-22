@@ -1,0 +1,10 @@
+{
+    "name": "leco",
+    "description": "Le Embedded CoffeeScript templates",
+    "author": "Alexander Solovyov",
+    "version": "0.1",
+    "dependencies": {
+        "pegjs": "0.7.0",
+        "coffee-script": "1.3.3"
+    },
+}
