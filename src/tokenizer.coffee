@@ -1,8 +1,11 @@
+_ = require 'underscore'
+
 BEGIN = '<%'
 END = '%>'
 
 
-tokenize = (source) ->
+tokenize = (source, moreTokenNames={}) ->
+    tokenNames = _.extend {}, defaultTokenNames, moreTokenNames
     tokens = []
     start = 0
     while true
@@ -21,21 +24,25 @@ tokenize = (source) ->
             if source[end - 1] == '\\'
                 continue
             break
-        tokens.push(identify(source.slice(next + BEGIN.length, end)))
+        tokens.push(
+            identify(source.slice(next + BEGIN.length, end), tokenNames))
         start = end + END.length
         if start >= source.length
             break
     return tokens
 
 
-identify = (s) ->
-    switch s[0]
-        when '='
-            return ['escape', s.slice(1)]
-        when '-'
-            return ['out', s.slice(1)]
-        else
-            return ['code', s]
+identify = (s, tokenNames) ->
+    id = s[0]
+    if tokenNames[id]
+        return [tokenNames[id], s.slice(1)]
+    return ['code', s]
 
 
+defaultTokenNames =
+    '-': 'out'
+    '=': 'escape'
+
+
+exports.defaultTokenNames = defaultTokenNames
 exports.tokenize = tokenize

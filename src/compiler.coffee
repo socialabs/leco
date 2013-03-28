@@ -1,11 +1,11 @@
 {tokenize} = require './tokenizer'
 {transform, dumpHelpers} = require './transformer'
-CoffeeScript = require "coffee-script"
+CoffeeScript = require 'coffee-script'
 
 
-compile = (source, helpers) ->
+compile = (source, helpers, helpersName) ->
     tokens = tokenize(source)
-    coffee = transform(tokens, helpers)
+    coffee = transform(tokens, {}, helpers, helpersName)
     CoffeeScript.compile(coffee, bare: true)
 
 

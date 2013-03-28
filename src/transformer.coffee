@@ -1,4 +1,6 @@
-getWriter = (prefixes) ->
+_ = require 'underscore'
+
+getWriter = ->
     text: []
     level: 0
     endings: {}
@@ -12,11 +14,8 @@ getWriter = (prefixes) ->
     write: (line, opts={}) ->
         if not line.length
             return
-        if not opts.type
-            opts.type = 'code'
-        prefix = prefixes[opts.type]
         @push Array(@level + 1).join('  ')
-        @push prefix + line
+        @push line
         @push '\n'
         if opts.indent
             if typeof opts.indent == 'string'
@@ -34,27 +33,11 @@ getWriter = (prefixes) ->
             @endings[@level - 1] = null
         @level--
 
-transform = (tokens, helpers={}, helpersName='helpers') ->
-    writer = getWriter
-        code: ''
-        literal: 'out.push '
-        out: "out.push #{helpersName}.safe "
-        escape: "out.push #{helpersName}.escape "
 
+transform = (tokens, moreTokenMap={}, helpers={}, helpersName='helpers') ->
+    tokenMap = _.extend {}, getDefaultTokenMap(helpersName), moreTokenMap
 
-    processCode = (value) ->
-        value = value.trim()
-        if value.match /^(end|else|when|catch|finally)/
-            writer.dedent()
-        if value == 'end'
-            return ['', false]
-        if value.match /(-|=)>/
-            value = value.replace(/(->|=>)$/, '((out) $1')
-            return [value, 'out)([]).join("")']
-        else if value[value.length - 1] == ':'
-            return [value.slice(0, value.length - 1), true]
-        return [value, false]
-
+    writer = getWriter()
     writer.write '(ctx) ->', indent: true
 
     if Object.keys(helpers).length
@@ -66,14 +49,9 @@ transform = (tokens, helpers={}, helpersName='helpers') ->
     for [type, value] in tokens
         if not value.length
             continue
-        switch type
-            when 'literal'
-                writer.write JSON.stringify(value), type: type
-            when 'code', 'out', 'escape'
-                [value, indent] = processCode(value)
-                writer.write value, type: type, indent: indent
-            else
-                throw "Fail: unknown type #{type}"
+        fn = tokenMap[type]
+        [value, indent] = fn(value, writer)
+        writer.write value, indent: indent
 
     if writer.level != 2
         throw "Fail: end indent is not neutral: #{writer.level - 2}"
@@ -95,5 +73,32 @@ dumpHelpers = (helpers, helpersName='helpers') ->
     return result
 
 
+processCode = (value, writer) ->
+    value = value.trim()
+    if value.match /^(end|else|when|catch|finally)/
+        writer.dedent()
+    if value == 'end'
+        return ['', false]
+    if value.match /(-|=)>/
+        value = value.replace(/(->|=>)$/, '((out) $1')
+        return [value, 'out)([]).join("")']
+    else if value[value.length - 1] == ':'
+        return [value.slice(0, value.length - 1), true]
+    return [value, false]
+
+
+getDefaultTokenMap = (helpersName) ->
+    code: processCode
+    literal: (value, writer) ->
+        ['out.push ' + JSON.stringify(value), false]
+    out: (value, writer) ->
+        [value, indent] = processCode(value, writer)
+        ["out.push #{helpersName}.safe #{value}", indent]
+    escape: (value, writer) ->
+        [value, indent] = processCode(value, writer)
+        ["out.push #{helpersName}.escape #{value}", indent]
+
+
+exports.getDefaultTokenMap = getDefaultTokenMap
 exports.transform = transform
 exports.dumpHelpers = dumpHelpers
