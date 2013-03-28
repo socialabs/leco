@@ -83,7 +83,7 @@ transform = (tokens, helpers={}, helpersName='helpers') ->
     return writer.result()
 
 
-dumpHelpers = (helpers, helpersName) ->
+dumpHelpers = (helpers, helpersName='helpers') ->
     result = ["#{helpersName} = {"]
     for name, value of helpers
         if typeof value == 'string'

@@ -16,7 +16,7 @@ optConfig =
             default: 'amd'
             help: 'wrapper type (AMD, CommonJS, global)'
         'helpers-name':
-            help: 'helpers name for template'
+            help: 'name of object containing helper functions'
             default: 'helpers'
         'helpers':
             flag: true
@@ -34,31 +34,36 @@ wrappers =
             (this.templates || (this.templates = {}))["%name%"] = '''
         end: '}).call(this);'
 
+
 run = ->
     parser = argumentum.load(optConfig)
     options = parser.parse()
+
     if options.helpers
-        output = compiler.printHelpers(helpers, options['helpers-name'])
-    else if not options[0]
-        output = parser.getUsage()
+        return compiler.printHelpers(helpers, options['helpers-name'])
+
+    if not options[0]
+        return parser.getUsage()
+
+    replaceName = (s) ->
+        if s.indexOf('%name%') == -1
+            return s
+        name = options[0]
+        name = name.slice(name.lastIndexOf('/') + 1, name.lastIndexOf('.'))
+        return s.replace('%name%', name)
+
+    source = fs.readFileSync(options[0]).toString()
+
+    if options['no-include-helpers']
+        template = compiler.compile(source)
     else
-        source = fs.readFileSync(options[0]).toString()
-        if options['no-include-helpers']
-            output = compiler.compile(source)
-        else
-            output = compiler.compile(source, helpers)
-        wrapper = wrappers[options.wrap.toLowerCase()]
-        if not wrapper
-            output = "Unknown wrapper: #{wrapper}"
-        else
-            output = wrapper.begin + output.trim() + wrapper.end;
+        template = compiler.compile(source, helpers)
 
-    if output.indexOf('%name%') != -1
-        name = options[0].slice(
-            options[0].lastIndexOf('/') + 1,
-            options[0].lastIndexOf('.'))
-        output = output.replace('%name%', name)
+    wrapper = wrappers[options.wrap.toLowerCase()]
+    if not wrapper
+        return "Unknown wrapper: #{wrapper}"
 
-    console.log(output)
+    return replaceName(wrapper.begin) + template.trim() + wrapper.end;
 
-run()
+
+console.log(run())
