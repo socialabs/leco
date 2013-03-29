@@ -2,7 +2,7 @@
     "name": "leco",
     "description": "Le Embedded CoffeeScript templates",
     "author": "Instant Communication Ltd",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "licenses": {
         "type": "ISC",
         "url": "http://github.com/piranha/leco/raw/master/LICENSE"

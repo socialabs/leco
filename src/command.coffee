@@ -72,4 +72,6 @@ run = ->
     return wrap(options.wrap, template, options[0])
 
 
+exports.wrap = wrap
+exports.wrappers = wrappers
 exports.run = run
