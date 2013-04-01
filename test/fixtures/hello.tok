@@ -1,0 +1,1 @@
+[["literal","Hello, "],["escape"," @name "],["literal",".\nI'M SHOUTING AT YOU, "],["escape"," @name.toUpperCase() "],["literal","!\n"]]

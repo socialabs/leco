@@ -80,7 +80,14 @@ processCode = (value, writer) ->
     if value == 'end'
         return ['', false]
     if value.match /(-|=)>/
-        value = value.replace(/(->|=>)$/, '((out) $1')
+        # generate a function, so it looks like this:
+        # (arg) =>
+        #     ((out) =>
+        #         out.push "some template with arg"
+        #         out
+        #     )([]).join("")
+        # This can be used as a callback with helpers
+        value = value.replace(/(->|=>)$/, '$1 ((out) $1')
         return [value, 'out)([]).join("")']
     else if value[value.length - 1] == ':'
         return [value.slice(0, value.length - 1), true]
@@ -93,7 +100,7 @@ getDefaultTokenMap = (helpersName) ->
         ['out.push ' + JSON.stringify(value), false]
     out: (value, writer) ->
         [value, indent] = processCode(value, writer)
-        ["out.push #{helpersName}.safe #{value}", indent]
+        ["out.push #{value}", indent]
     escape: (value, writer) ->
         [value, indent] = processCode(value, writer)
         ["out.push #{helpersName}.escape #{value}", indent]

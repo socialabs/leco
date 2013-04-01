@@ -15,6 +15,6 @@ exports.safe = (value) ->
         return ''
     if value.templateSafe
         return value
-    value = value.toString()
+    value = new String(value.toString())
     value.templateSafe = true
     return value
