@@ -7,7 +7,7 @@ read = (x) -> fs.readFileSync(__dirname + '/fixtures/' + x).toString()
 f = (x) -> read(x + '.out')
 t = (x, ctx) ->
     tokens = tokenize(read(x + '.eco'))
-    tpl = transform(tokens, {}, helpers)
+    tpl = transform(tokens, {helpers})
     CoffeeScript.eval(tpl)(ctx)
 
 

@@ -67,7 +67,8 @@ run = ->
     if options['no-include-helpers']
         template = compiler.compile(source)
     else
-        template = compiler.compile(source, helpers, options['helpers-name'])
+        template = compiler.compile(source,
+            {helpers, helpersName: options['helpers-name']})
 
     return wrap(options.wrap, template, options[0])
 

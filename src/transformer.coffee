@@ -34,14 +34,17 @@ getWriter = ->
         @level--
 
 
-transform = (tokens, moreTokenMap={}, helpers={}, helpersName='helpers') ->
-    tokenMap = _.extend {}, getDefaultTokenMap(helpersName), moreTokenMap
+transform = (tokens, options) ->
+    options = _.extend({helpers: {}, helpersName: 'helpers', moreTokenMap: {}},
+        options)
+    tokenMap = _.extend({}, getDefaultTokenMap(options.helpersName),
+        options.moreTokenMap)
 
     writer = getWriter()
     writer.write '(ctx) ->', indent: true
 
-    if Object.keys(helpers).length
-        for line in dumpHelpers(helpers, helpersName)
+    if Object.keys(options.helpers).length
+        for line in dumpHelpers(options.helpers, options.helpersName)
             writer.write line
 
     writer.write '((out) ->', indent: 'out).call(ctx, []).join("")'

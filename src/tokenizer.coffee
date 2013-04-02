@@ -1,11 +1,12 @@
 _ = require 'underscore'
 
-BEGIN = '<%'
-END = '%>'
 
+tokenize = (source, options={}) ->
+    options = _.extend {begin: '<%', end: '%>', moreTokenNames: {}}, options
+    tokenNames = _.extend {}, defaultTokenNames, options.moreTokenNames
+    BEGIN = options.begin
+    END = options.end
 
-tokenize = (source, moreTokenNames={}) ->
-    tokenNames = _.extend {}, defaultTokenNames, moreTokenNames
     tokens = []
     start = 0
     while true

@@ -3,9 +3,9 @@
 CoffeeScript = require 'coffee-script'
 
 
-compile = (source, helpers, helpersName) ->
+compile = (source, options={}) ->
     tokens = tokenize(source)
-    coffee = transform(tokens, {}, helpers, helpersName)
+    coffee = transform(tokens, options)
     CoffeeScript.compile(coffee, bare: true)
 
 
