@@ -35,10 +35,10 @@ getWriter = ->
 
 
 transform = (tokens, options) ->
-    options = _.extend({helpers: {}, helpersName: 'helpers', moreTokenMap: {}},
+    options = _.extend({helpers: {}, helpersName: 'helpers', tokenMap: {}},
         options)
     tokenMap = _.extend({}, getDefaultTokenMap(options.helpersName),
-        options.moreTokenMap)
+        options.tokenMap)
 
     writer = getWriter()
     writer.write '(ctx) ->', indent: true

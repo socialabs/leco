@@ -2,8 +2,8 @@ _ = require 'underscore'
 
 
 tokenize = (source, options={}) ->
-    options = _.extend {begin: '<%', end: '%>', moreTokenNames: {}}, options
-    tokenNames = _.extend {}, defaultTokenNames, options.moreTokenNames
+    options = _.extend {begin: '<%', end: '%>', tokenNames: {}}, options
+    tokenNames = _.extend {}, defaultTokenNames, options.tokenNames
     BEGIN = options.begin
     END = options.end
 
